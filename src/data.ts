@@ -1,3 +1,4 @@
+import { FilterMenu } from "./components/table";
 import { TableColumn } from "./components/types";
 
 export const rows = [
@@ -89,16 +90,16 @@ export const columns: TableColumn[] = [
   {
     label: "Full Name",
     filterable: true,
-    filterBy: "names",
+    filterBy: FilterMenu.names,
   },
   {
     label: "Project Name",
     filterable: true,
-    filterBy: "projects",
+    filterBy: FilterMenu.projects,
   },
   {
     label: "Company Name",
     filterable: true,
-    filterBy: "companies",
+    filterBy: FilterMenu.companies,
   },
 ];

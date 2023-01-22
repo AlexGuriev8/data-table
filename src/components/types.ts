@@ -1,4 +1,4 @@
-import { FilterBy } from "./filter-box";
+import { FilterBy } from "./table";
 
 export interface TableColumn {
   label: string;

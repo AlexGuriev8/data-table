@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Button,
@@ -11,6 +11,7 @@ import {
   Popover,
   Typography,
 } from "@material-ui/core";
+import { FilterBy } from "./table";
 
 export interface CheckItem {
   key: string;
@@ -22,24 +23,23 @@ interface Props {
   open: boolean;
   anchorRef: any;
   handleClose: () => void;
-  dataForFilterMenu: {
-    names: string[];
-    projects: string[];
-    companies: string[];
-  };
-  setCheckedForFilter?: React.Dispatch<React.SetStateAction<CheckItem[]>>;
+  dataForFilterMenu: FilteredItems;
   checkedForFilter?: CheckItem[];
-  applyFilters: (filters: FilteredItems, filterBy: FilterBy) => void;
+  applyFilters: () => void;
   filterBy: FilterBy | null;
+  setFilterColumns: React.Dispatch<React.SetStateAction<FilteredItems>>;
 }
+
+type Item = {
+  name: string;
+  checked: boolean;
+};
 
 export interface FilteredItems {
-  names: string[];
-  projects: string[];
-  companies: string[];
+  names: Item[];
+  projects: Item[];
+  companies: Item[];
 }
-
-export type FilterBy = "names" | "projects" | "companies";
 
 const FilterBox = (props: Props) => {
   const {
@@ -49,48 +49,40 @@ const FilterBox = (props: Props) => {
     handleClose,
     dataForFilterMenu,
     applyFilters,
+    setFilterColumns,
   } = props;
 
-  const [filteredItems, setFilteredItems] = useState<FilteredItems>({
-    names: [],
-    projects: [],
-    companies: [],
-  });
   const [elementWidth, setElementWidth] = useState<number>(0);
-  console.log("filteredItems", filteredItems);
 
-  const handleCheckboxChange = (option: string, type: FilterBy) => {
-    filteredItems[type].includes(option)
-      ? setFilteredItems((prevState) => ({
-          ...prevState,
-          [type]: filteredItems[type].filter((item) => item !== option),
-        }))
-      : setFilteredItems((prevState) => ({
-          ...prevState,
-          [type]: [...filteredItems[type], option],
-        }));
+  const handleCheckboxChange = (option: Item, type: FilterBy) => {
+    const newFilterColumns = { ...dataForFilterMenu };
+    newFilterColumns[type] = newFilterColumns[type].map((item) =>
+      item.name === option.name ? { ...item, checked: !item.checked } : item
+    );
+    setFilterColumns(newFilterColumns);
   };
 
   const getAllChecked = () => {
     if (!filterBy) return false;
-    return dataForFilterMenu[filterBy].every((data) =>
-      filteredItems[filterBy].includes(data)
-    );
+    return dataForFilterMenu[filterBy].every((item) => item.checked);
   };
 
   const handleToggleAll = () => {
-    if (!filterBy) return;
-    filteredItems[filterBy].length === dataForFilterMenu[filterBy].length
-      ? handleClearFilter()
-      : setFilteredItems(dataForFilterMenu);
+    const newFilterColumns = { ...dataForFilterMenu };
+    newFilterColumns[filterBy!] = newFilterColumns[filterBy!].map((item) => ({
+      ...item,
+      checked: !getAllChecked(),
+    }));
+    setFilterColumns(newFilterColumns);
   };
 
   const handleClearFilter = () => {
-    if (!filterBy) return;
-    setFilteredItems((prevState) => ({
-      ...prevState,
-      [filterBy]: [],
+    const newFilterColumns = { ...dataForFilterMenu };
+    newFilterColumns[filterBy!] = newFilterColumns[filterBy!].map((item) => ({
+      ...item,
+      checked: false,
     }));
+    setFilterColumns(newFilterColumns);
   };
 
   return (
@@ -118,17 +110,14 @@ const FilterBox = (props: Props) => {
           dataForFilterMenu[filterBy].map((option, index) => (
             <MenuItem
               key={index}
-              value={option}
+              value={option.name}
               onClick={() => handleCheckboxChange(option, filterBy)}
               dense
             >
               <Box>
                 <Box style={{ display: "flex", alignItems: "center" }}>
                   <ListItemIcon>
-                    <Checkbox
-                      checked={filteredItems[filterBy].includes(option)}
-                      color="default"
-                    />
+                    <Checkbox checked={option.checked} color="default" />
                   </ListItemIcon>
                   <Typography
                     variant="body2"
@@ -136,7 +125,7 @@ const FilterBox = (props: Props) => {
                       setElementWidth(e.currentTarget.offsetWidth)
                     }
                   >
-                    {option}
+                    {option.name}
                   </Typography>
                 </Box>
               </Box>
@@ -146,7 +135,7 @@ const FilterBox = (props: Props) => {
       <Box>
         <Button
           variant={"contained"}
-          onClick={() => applyFilters(filteredItems, filterBy!)}
+          onClick={applyFilters}
           disableElevation
           style={{ backgroundColor: "#e0e0e0", color: "#000" }}
         >
